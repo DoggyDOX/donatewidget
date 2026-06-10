@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Космический Сбор • Doggy_dox (Google Sheets)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&family=VT323&display=swap');
+
+    :root {
+      --neon: #00f7ff;
+      --pink: #ff00aa;
+      --purple: #8a2be2;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      width: 700px;
+      height: 1080px;
+      background: radial-gradient(circle at center, #0a0022 0%, #000011 100%);
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle, rgba(138,43,226,0.15) 0%, transparent 70%),
+                  url('https://source.unsplash.com/random/700x1080/?stars,nebula') center/cover;
+      opacity: 0.35;
+      z-index: -2;
+      animation: stars 120s linear infinite;
+    }
+
+    @keyframes stars { 0% { background-position: 0 0; } 100% { background-position: -300px -300px; } }
+
+    .glitch { animation: glitch-skew 4s infinite linear alternate-reverse; }
+    @keyframes glitch-skew { 0% { transform: skew(0deg); } 10% { transform: skew(4deg, 1deg); } 20% { transform: skew(-4deg, -1deg); } }
+
+    .neon-text { text-shadow: 0 0 15px var(--neon), 0 0 30px var(--neon), 0 0 50px var(--pink); }
+
+    @keyframes neon-pulse {
+      0% { opacity: 0.6; text-shadow: 0 0 6px #00f7ff; }
+      100% { opacity: 1; text-shadow: 0 0 18px #00f7ff, 0 0 30px #00f7ff; }
+    }
+
+    .widget { 
+      width: 100%; height: 100%; padding: 20px; 
+      display: flex; flex-direction: column; position: relative; 
+    }
+
+    .settings-btn {
+      position: absolute; top: 20px; right: 20px; font-size: 28px;
+      cursor: pointer; z-index: 100; background: rgba(0,0,0,0.7);
+      width: 50px; height: 50px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--neon); transition: all 0.3s;
+    }
+    .settings-btn:hover { transform: rotate(45deg) scale(1.15); background: var(--neon); color: #000; }
+
+    .header-title {
+      font-size: 42px; font-weight: 900; letter-spacing: 4px;
+      color: #00f7ff; text-transform: uppercase; text-align: center;
+      animation: neon-flicker 1.5s infinite alternate;
+    }
+    @keyframes neon-flicker {
+      0%,19% { text-shadow: 0 0 10px #00f7ff, 0 0 20px #00f7ff; }
+      20%,24% { text-shadow: none; }
+      25%,100% { text-shadow: 0 0 20px #00f7ff, 0 0 40px #ff00aa; }
+    }
+
+    .top-donor {
+      background: rgba(255,255,255,0.08); border: 2px solid #ff00aa;
+      border-radius: 12px; padding: 12px; margin: 15px 0;
+      text-align: center; font-size: 22px;
+    }
+
+    .progress-container {
+      height: 45px; background: #111133; border: 3px solid #00f7ff;
+      border-radius: 9999px; overflow: hidden; margin-bottom: 15px;
+    }
+    .progress-bar {
+      height: 100%; background: linear-gradient(90deg, #00f7ff, #ff00aa, #8a2be2);
+      transition: width 1.5s; display: flex; align-items: center;
+      justify-content: center; font-weight: bold; color: #000;
+    }
+
+    .donors-list {
+      height: 180px;
+      background: rgba(10,0,40,0.7); border: 2px solid #00f7ff;
+      border-radius: 12px; padding: 12px; margin-bottom: 15px;
+      overflow-y: auto; font-size: 15px;
+    }
+    .donor-item {
+      display: flex; justify-content: space-between; padding: 8px 10px;
+      margin: 4px 0; background: rgba(255,255,255,0.06);
+      border-radius: 8px;
+    }
+
+    .timers {
+      display: flex; gap: 15px; margin-bottom: 15px;
+    }
+    .timer-box {
+      flex: 1; background: rgba(0,0,0,0.6); border: 2px solid var(--neon);
+      padding: 10px 15px; border-radius: 12px; display: flex;
+      align-items: center; justify-content: space-between;
+    }
+    .timer-label { font-size: 15px; opacity: 0.8; }
+    .timer-value { font-size: 26px; font-family: 'VT323', monospace; }
+
+    .chat-container {
+      flex: 1;
+      min-height: 580px;
+      border: 3px solid #ff00aa; border-radius: 12px; overflow: hidden;
+    }
+
+    .modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.95); z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .modal-content {
+      width: 620px; background: #0a0022; border: 3px solid var(--neon);
+      border-radius: 16px; padding: 25px; max-height: 90vh; overflow-y: auto;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="widget">
+    <div class="settings-btn" onclick="toggleModal()">⚙️</div>
+
+    <header>
+      <div class="header-title glitch neon-text">СБОР НА КОСМОЛЕТ</div>
+      <div style="text-align:center; font-size:18px; opacity:0.8; margin-top:8px;">Doggy_dox</div>
+    </header>
+
+    <div class="top-donor" id="topDonorContainer">
+      👑 ТОП ШЕЙХ: <span id="topDonor" style="color:#ffd700;">@username — 15 000 ₽</span>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; font-size:19px; margin-bottom:8px;">
+      <span id="currentAmount">0 ₽</span>
+      <span id="goalAmount">Цель: 100 000 ₽</span>
+    </div>
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar" style="width:0%">0%</div>
+    </div>
+
+    <div class="donors-list" id="donorsList"></div>
+
+    <div class="timers">
+      <div class="timer-box">
+        <span class="timer-label">LAST:</span>
+        <span id="lastDonationTime" class="timer-value">00:00</span>
+        <span id="lastDonorName" style="color:#ff00aa; margin-left:10px;">@ник ❤️</span>
+      </div>
+      <div class="timer-box">
+        <span class="timer-label">ONLINE</span>
+        <span id="syncIndicator" style="margin: 0 8px; font-size: 20px; color: #00f7ff; text-shadow: 0 0 12px #00f7ff; animation: neon-pulse 2s infinite alternate;">●</span>
+        <span id="streamOnlineTime" class="timer-value">00:00:00</span>
+      </div>
+    </div>
+
+    <div class="chat-container">
+      <iframe src="https://giambaj.it/twitch/jchat/v2/?channel=Doggy_dox&size=2&font=1&animate=true" style="width:100%; height:100%; border:none;"></iframe>
+    </div>
+  </div>
+
+  <!-- Панель управления -->
+  <div id="controlModal" class="modal">
+    <div class="modal-content">
+      <h2 style="color:#00f7ff; text-align:center; margin-bottom:15px;">⚙️ ПАНЕЛЬ УПРАВЛЕНИЯ</h2>
+      
+      <!-- Google Sheets URL -->
+      <div style="margin-bottom:15px; padding:12px; background:#112233; border-radius:10px; border:1px solid #00f7ff;">
+        <div style="font-size:13px; margin-bottom:6px; color:#00f7ff;">🔗 URL Google Apps Script (для синхронизации с OBS)</div>
+        <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/XXXXXXXX/exec" 
+               style="width:100%; padding:10px; background:#000; border:2px solid #00f7ff; color:white; font-size:13px; margin-bottom:8px;">
+        <div style="display:flex; gap:8px;">
+          <button onclick="saveScriptUrl()" style="flex:1; padding:10px; background:#00aa77; color:white; border:none; font-weight:bold;">💾 Сохранить URL</button>
+          <button onclick="testConnection()" style="flex:1; padding:10px; background:#3366aa; color:white; border:none;">🔍 Проверить связь</button>
+        </div>
+        <div style="font-size:11px; opacity:0.6; margin-top:6px;">Данные будут автоматически сохраняться в Google Таблицу и обновляться в OBS</div>
+      </div>
+
+      <input type="text" id="donorName" placeholder="Ник донатера" style="width:100%; padding:12px; margin-bottom:10px; background:#111; border:2px solid #00f7ff; color:white;">
+      <input type="number" id="donorAmount" placeholder="Сумма ₽" style="width:100%; padding:12px; margin-bottom:15px; background:#111; border:2px solid #00f7ff; color:white;">
+      
+      <button onclick="addDonation()" style="width:100%; padding:16px; background:#ff00aa; color:white; border:none; font-size:18px; font-weight:bold; margin-bottom:15px;">🚀 ДОБАВИТЬ ДОНат (в таблицу)</button>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px;">
+        <button onclick="subtractLast()" style="padding:12px;">− Убрать последний</button>
+        <button onclick="resetAll()" style="padding:12px; background:#440000; color:white;">Сбросить ВЕСЬ виджет</button>
+        <button onclick="resetLastTimer()" style="padding:12px;">Сброс Last</button>
+        <button onclick="resetOnlineTimer()" style="padding:12px;">Сброс Online</button>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <button onclick="syncNow()" style="flex:1; padding:12px; background:#00aa77;">🔄 Синхронизировать сейчас</button>
+        <button onclick="exportJSON()" style="flex:1; padding:12px;">💾 Экспорт JSON</button>
+        <button onclick="importJSON()" style="flex:1; padding:12px;">📂 Импорт JSON</button>
+      </div>
+
+      <div style="margin-top:15px; text-align:center;">
+        <button onclick="toggleModal()" style="padding:10px 30px; background:#333; color:white; border:none;">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== КОНФИГУРАЦИЯ ====================
+    let SCRIPT_URL = localStorage.getItem('googleScriptUrl_doggy') || '';
+    let donations = [];
+    let goal = 100000;
+    let current = 0;
+    let topDonor = { name: "@space_sheikh", amount: 0 };
+    let lastDonationTime = Date.now();
+    let streamStartTime = Date.now();
+
+    // Восстанавливаем время начала стрима, чтобы таймер не сбрасывался при обновлении страницы
+    const savedStreamStart = localStorage.getItem('doggy_streamStartTime');
+    if (savedStreamStart) {
+      streamStartTime = parseInt(savedStreamStart, 10) || Date.now();
+    }
+
+    // Элементы DOM
+    const donorsListEl = document.getElementById('donorsList');
+    const progressBar = document.getElementById('progressBar');
+    const currentAmountEl = document.getElementById('currentAmount');
+    const goalAmountEl = document.getElementById('goalAmount');
+    const topDonorEl = document.getElementById('topDonor');
+    const topDonorContainer = document.getElementById('topDonorContainer');
+    const lastDonationTimeEl = document.getElementById('lastDonationTime');
+    const lastDonorNameEl = document.getElementById('lastDonorName');
+    const streamOnlineTimeEl = document.getElementById('streamOnlineTime');
+    const syncIndicator = document.getElementById('syncIndicator');
+    const modal = document.getElementById('controlModal');
+
+    // Проверка OBS режима (скрыть кнопку настроек)
+    function checkObsMode() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('obs') === '1' || params.get('mode') === 'obs') {
+        const btn = document.querySelector('.settings-btn');
+        if (btn) btn.style.display = 'none';
+        // Можно добавить другие стили для OBS
+        document.body.style.cursor = 'default';
+      }
+    }
+
+    function updateSyncIndicator() {
+      if (!syncIndicator) return;
+      if (SCRIPT_URL && !SCRIPT_URL.includes('YOUR_')) {
+        syncIndicator.style.color = '#00f7ff';
+        syncIndicator.style.opacity = '1';
+        syncIndicator.title = 'Синхронизация с Google Таблицами активна';
+      } else {
+        syncIndicator.style.color = '#555';
+        syncIndicator.style.opacity = '0.4';
+        syncIndicator.title = 'Синхронизация не настроена (только локально)';
+      }
+    }
+
+    function toggleModal() {
+      const isOpen = modal.style.display === 'flex';
+      modal.style.display = isOpen ? 'none' : 'flex';
+      
+      if (!isOpen) {
+        // При открытии — подставить текущий URL
+        const input = document.getElementById('scriptUrlInput');
+        if (input) input.value = SCRIPT_URL || '';
+      }
+    }
+
+    // Сохранение URL Google Script в localStorage
+    window.saveScriptUrl = function() {
+      const input = document.getElementById('scriptUrlInput');
+      const val = input.value.trim();
+      if (!val) {
+        alert('Вставьте URL из Google Apps Script');
+        return;
+      }
+      if (!val.includes('script.google.com')) {
+        if (!confirm('URL выглядит необычно. Всё равно сохранить?')) return;
+      }
+      localStorage.setItem('googleScriptUrl_doggy', val);
+      SCRIPT_URL = val;
+      updateSyncIndicator();
+      alert('✅ URL сохранён! Данные теперь синхронизируются с Google Таблицами.\nОбновите данные или добавьте донат для проверки.');
+      // Сразу попробуем загрузить
+      loadData();
+    };
+
+    // Тест соединения с таблицей
+    window.testConnection = async function() {
+      if (!SCRIPT_URL) {
+        alert('Сначала сохраните URL Google Apps Script');
+        return;
+      }
+      try {
+        const res = await fetch(`${SCRIPT_URL}?action=getDonations`, { method: 'GET' });
+        const text = await res.text();
+        if (res.ok) {
+          alert('✅ Связь с Google Таблицей установлена!\nОтвет: ' + text.substring(0, 120) + '...');
+        } else {
+          alert('⚠️ Ошибка ответа: ' + res.status);
+        }
+      } catch(e) {
+        alert('❌ Ошибка соединения: ' + e.message + '\n\nПроверьте:\n1. URL правильный?\n2. Развёрнуто как Web App (Anyone)?\n3. Разрешения даны?');
+      }
+    };
+
+    // Загрузка данных из Google Таблицы (или localStorage)
+    async function loadData() {
+      let loadedFromSheet = false;
+
+      if (SCRIPT_URL && !SCRIPT_URL.includes('YOUR_')) {
+        try {
+          const res = await fetch(`${SCRIPT_URL}?action=getDonations`, {
+            method: 'GET',
+            cache: 'no-cache'
+          });
+          
+          if (res.ok) {
+            const json = await res.json();
+            if (json.success && Array.isArray(json.donations)) {
+              donations = json.donations.map(d => ({
+                name: d.name || '@Аноним',
+                amount: parseInt(d.amount) || 0,
+                time: parseInt(d.time) || Date.now()
+              }));
+              
+              // Сортируем по времени (новые сверху)
+              donations.sort((a, b) => b.time - a.time);
+              
+              // Пересчитываем всё из данных таблицы
+              current = donations.reduce((sum, d) => sum + d.amount, 0);
+              
+              if (donations.length > 0) {
+                topDonor = donations.reduce((max, d) => 
+                  d.amount > max.amount ? { name: d.name, amount: d.amount } : max, 
+                  { name: '@space_sheikh', amount: 0 }
+                );
+                lastDonationTime = donations[0].time;
+              } else {
+                topDonor = { name: "@space_sheikh", amount: 0 };
+                lastDonationTime = Date.now();
+              }
+              
+              loadedFromSheet = true;
+              console.log('[Sheets] Загружено донатов:', donations.length);
+            }
+          }
+        } catch(e) {
+          console.warn('[Sheets] Ошибка загрузки, используем локальные данные:', e);
+        }
+      }
+
+      // Fallback на localStorage, если не удалось загрузить из таблицы
+      if (!loadedFromSheet) {
+        const saved = localStorage.getItem('cosmicDonations_v4');
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            donations = data.donations || [];
+            current = data.current || 0;
+            topDonor = data.topDonor || topDonor;
+            lastDonationTime = data.lastDonationTime || Date.now();
+            streamStartTime = data.streamStartTime || Date.now();
+            if (data.goal) goal = data.goal;
+          } catch(err) {}
+        }
+        
+        // Демо-данные только если ничего нет
+        if (donations.length === 0 && (!SCRIPT_URL || SCRIPT_URL.includes('YOUR_'))) {
+          donations = [{name: "@neonfox", amount: 1500, time: Date.now() - 300000}];
+          current = 1500;
+          topDonor = { name: "@neonfox", amount: 1500 };
+          lastDonationTime = donations[0].time;
+        }
+      }
+
+      renderAll();
+      saveData(); // сохраняем локально как бэкап
+    }
+
+    function saveData() {
+      // Всегда сохраняем локально как резерв
+      localStorage.setItem('cosmicDonations_v4', JSON.stringify({
+        donations, current, goal, topDonor, lastDonationTime, streamStartTime
+      }));
+    }
+
+    function renderAll() {
+      const percent = Math.min(Math.round((current / goal) * 100), 100);
+      progressBar.style.width = percent + '%';
+      progressBar.textContent = percent + '%';
+      
+      currentAmountEl.textContent = current.toLocaleString('ru-RU') + ' ₽';
+      goalAmountEl.textContent = `Цель: ${goal.toLocaleString('ru-RU')} ₽`;
+
+      // Показываем блок топ-донатора только если есть реальный донат
+      if (topDonorContainer) {
+        if (topDonor.amount > 0 && donations.length > 0) {
+          topDonorContainer.style.display = 'block';
+          topDonorEl.textContent = `${topDonor.name} — ${topDonor.amount.toLocaleString('ru-RU')} ₽`;
+        } else {
+          topDonorContainer.style.display = 'none';
+        }
+      }
+
+      // Список последних донатов (максимум 5)
+      donorsListEl.innerHTML = '';
+      donations.slice(0, 5).forEach(d => {
+        const div = document.createElement('div');
+        div.className = 'donor-item';
+        div.innerHTML = `<span>${d.name}</span><span style="color:#00ffaa">+${d.amount.toLocaleString('ru-RU')} ₽</span>`;
+        donorsListEl.appendChild(div);
+      });
+
+      // Последний донатер для таймера
+      if (donations.length > 0) {
+        lastDonorNameEl.textContent = `${donations[0].name} ❤️`;
+      } else {
+        lastDonorNameEl.textContent = '@ник ❤️';
+      }
+    }
+
+    // Добавить донат (в таблицу + локально)
+    window.addDonation = async function() {
+      const name = document.getElementById('donorName').value.trim() || '@Аноним';
+      const amount = parseInt(document.getElementById('donorAmount').value) || 100;
+      if (amount <= 0) return;
+
+      const newDonation = { name, amount, time: Date.now() };
+
+      // Оптимистичное обновление UI сразу
+      donations.unshift(newDonation); // добавляем в начало (новые сверху)
+      current += amount;
+      if (amount > topDonor.amount) {
+        topDonor = { name, amount };
+      }
+      lastDonationTime = Date.now();
+
+      renderAll();
+      saveData();
+
+      // Очищаем поля
+      document.getElementById('donorName').value = '';
+      document.getElementById('donorAmount').value = '';
+
+      // Записываем в Google Таблицу
+      if (SCRIPT_URL && !SCRIPT_URL.includes('YOUR_')) {
+        try {
+          // Используем GET вместо POST — это надёжнее всего работает с Google Apps Script
+          const params = new URLSearchParams({
+            action: 'addDonation',
+            name: newDonation.name,
+            amount: newDonation.amount,
+            time: newDonation.time
+          });
+          const res = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET' });
+          
+          const result = await res.json().catch(() => ({}));
+          if (!result.success) {
+            console.warn('Сервер вернул ошибку при записи:', result);
+            alert('⚠️ Google Таблица вернула ошибку: ' + (result.error || 'неизвестная'));
+          } else {
+            console.log('%c[Sheets] Донат успешно записан в таблицу', 'color:#0f0');
+          }
+        } catch(e) {
+          console.error('Ошибка записи в Google Таблицу (fetch failed):', e);
+          // Более подробная диагностика
+          let msg = 'Не удалось записать в Google Таблицу.\n\nВозможные причины:\n';
+          msg += '• URL Google Apps Script неправильный или не сохранён\n';
+          msg += '• Web App не развёрнут с доступом "Anyone"\n';
+          msg += '• Нужно заново Deploy после изменений в коде скрипта\n';
+          msg += '• Блокировщик рекламы / CORS в OBS\n\n';
+          msg += 'Данные сохранены только локально. Попробуйте "Проверить связь" в настройках.';
+          alert(msg);
+        }
+        
+        // Перезагружаем данные из таблицы (чтобы синхронизировать все вкладки/OBS)
+        setTimeout(() => loadData(), 600);
+      } else {
+        // Без таблицы — просто сохраняем локально
+        alert('Донат добавлен локально (Google Таблица не настроена — вставьте URL в панели управления)');
+      }
+
+      // Закрываем модалку
+      toggleModal();
+    };
+
+    // Убрать последний донат
+    window.subtractLast = async function() {
+      if (donations.length === 0) return;
+
+      const removed = donations.shift(); // убираем самый новый
+      current = Math.max(0, current - removed.amount);
+
+      // Пересчитываем топа (на случай если убрали топ-доната)
+      if (donations.length > 0) {
+        topDonor = donations.reduce((max, d) => 
+          d.amount > max.amount ? { name: d.name, amount: d.amount } : max, 
+          { name: '@space_sheikh', amount: 0 }
+        );
+        lastDonationTime = donations[0].time;
+      } else {
+        topDonor = { name: "@space_sheikh", amount: 0 };
+        lastDonationTime = Date.now();
+      }
+
+      renderAll();
+      saveData();
+
+      // Если есть таблица — удаляем последнюю строку там тоже
+      if (SCRIPT_URL && !SCRIPT_URL.includes('YOUR_')) {
+        try {
+          await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'removeLast' })
+          });
+        } catch(e) {
+          console.error('Ошибка удаления из таблицы:', e);
+        }
+        setTimeout(() => loadData(), 500);
+      } else {
+        alert('Донат удалён локально');
+      }
+    };
+
+    // Полный сброс
+    window.resetAll = async function() {
+      if (!confirm('Сбросить ВЕСЬ виджет и все данные в таблице?')) return;
+
+      donations = [];
+      current = 0;
+      topDonor = { name: "@space_sheikh", amount: 0 };
+      lastDonationTime = Date.now();
+
+      renderAll();
+      saveData();
+
+      if (SCRIPT_URL && !SCRIPT_URL.includes('YOUR_')) {
+        try {
+          await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'resetAll' })
+          });
+          alert('✅ Таблица и виджет полностью сброшены');
+        } catch(e) {
+          alert('Виджет сброшен локально, но не удалось очистить таблицу');
+        }
+        setTimeout(() => loadData(), 500);
+      } else {
+        alert('Виджет сброшен (локально)');
+      }
+    };
+
+    window.resetLastTimer = () => {
+      lastDonationTime = Date.now();
+      // При следующей синхронизации может перезаписаться из таблицы
+    };
+    
+    window.resetOnlineTimer = () => {
+      streamStartTime = Date.now();
+      localStorage.setItem('doggy_streamStartTime', streamStartTime);
+    };
+
+    // Ручная синхронизация
+    window.syncNow = async function() {
+      await loadData();
+      alert('✅ Данные синхронизированы с Google Таблицей');
+    };
+
+    // Таймеры (обновляются каждую секунду)
+    setInterval(() => {
+      // LAST donation timer
+      const lastSec = Math.floor((Date.now() - lastDonationTime) / 1000);
+      lastDonationTimeEl.textContent = 
+        `${Math.floor(lastSec/60).toString().padStart(2,'0')}:${(lastSec%60).toString().padStart(2,'0')}`;
+
+      // Stream ONLINE timer
+      const onlineSec = Math.floor((Date.now() - streamStartTime) / 1000);
+      const h = Math.floor(onlineSec / 3600);
+      const m = Math.floor((onlineSec % 3600) / 60);
+      const s = onlineSec % 60;
+      streamOnlineTimeEl.textContent = 
+        `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    }, 1000);
+
+    // Авто-синхронизация каждые 12 секунд (для OBS и других вкладок)
+    function startAutoSync() {
+      setInterval(async () => {
+        if (SCRIPT_URL && !SCRIPT_URL.includes('YOUR_')) {
+          await loadData();
+        }
+      }, 12000);
+    }
+
+    // JSON экспорт/импорт (оставляем для бэкапа)
+    window.exportJSON = () => {
+      const dataStr = JSON.stringify({ 
+        donations, current, goal, topDonor, lastDonationTime, streamStartTime 
+      }, null, 2);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([dataStr], { type: "application/json" }));
+      a.download = "cosmic_donations_backup.json";
+      a.click();
+    };
+
+    window.importJSON = () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = e => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+          try {
+            const data = JSON.parse(ev.target.result);
+            donations = data.donations || [];
+            current = data.current || 0;
+            topDonor = data.topDonor || topDonor;
+            lastDonationTime = data.lastDonationTime || Date.now();
+            streamStartTime = data.streamStartTime || Date.now();
+            if (data.goal) goal = data.goal;
+            saveData();
+            renderAll();
+            alert('✅ JSON импортирован (локально)');
+          } catch(err) { 
+            alert('Ошибка импорта JSON'); 
+          }
+        };
+        reader.readAsText(e.target.files[0]);
+      };
+      input.click();
+    };
+
+    // Инициализация
+    async function init() {
+      checkObsMode();
+      updateSyncIndicator();
+      
+      await loadData();
+      startAutoSync();
+
+      // Если URL не задан — показываем подсказку при первом открытии настроек
+      if (!SCRIPT_URL) {
+        setTimeout(() => {
+          const hint = document.createElement('div');
+          hint.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#112233;border:1px solid #ff00aa;padding:8px 16px;border-radius:20px;font-size:13px;';
+          hint.innerHTML = '⚙️ Откройте панель управления и настройте Google Apps Script для синхронизации с OBS';
+          document.body.appendChild(hint);
+          setTimeout(() => hint.remove(), 6000);
+        }, 4000);
+      }
+
+      console.log('%c[Widget] Космический сбор с Google Sheets готов!', 'color:#00f7ff');
+    }
+
+    // Запуск
+    init();
+  </script>
+</body>
+</html>
