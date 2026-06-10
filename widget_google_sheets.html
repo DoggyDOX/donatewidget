@@ -401,20 +401,15 @@
     }
 
     function saveData() {
-      // Всегда сохраняем локально как резерв
-      localStorage.setItem('cosmicDonations_v4', JSON.stringify({
-        donations, current, goal, topDonor, lastDonationTime, streamStartTime
-      }));
-      
-      // Дополнительное надёжное сохранение таймера ONLINE
-      if (streamStartTime > 0) {
-        localStorage.setItem('doggy_streamStartTime', streamStartTime);
-      }
-      // Сохранение lastDonationTime, чтобы не сбрасывался при обновлении страницы
-      if (lastDonationTime > 0) {
-        localStorage.setItem('doggy_lastDonationTime', lastDonationTime);
-      }
-    }
+  localStorage.setItem('cosmicDonations_v4', JSON.stringify({
+    donations, current, goal, topDonor, streamStartTime
+  }));
+
+  // Сохраняем только ONLINE таймер
+  if (streamStartTime > 0) {
+    localStorage.setItem('doggy_streamStartTime', streamStartTime);
+  }
+}
 
     function renderAll() {
       const percent = Math.min(Math.round((current / goal) * 100), 100);
